@@ -4,10 +4,14 @@
 #include "LowPolyFPS/Character/PlayerCharacter.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Controller.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/Character.h"
+#include "Components/TimelineComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -20,6 +24,13 @@ APlayerCharacter::APlayerCharacter()
     CameraComponent->SetupAttachment(RootComponent);
     CameraComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 64.0f));
     CameraComponent->bUsePawnControlRotation = true;
+
+    // Timeline Component for Smooth Crouch
+    CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CrouchTimeline"));
+
+    // Default Capsule Sizes
+    OriginalCapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+    CrouchCapsuleHalfHeight = OriginalCapsuleHalfHeight * 0.5f; // Half the size
 
     // Create First-Person Arms Mesh
     FPArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonArms"));
@@ -40,6 +51,13 @@ void APlayerCharacter::BeginPlay()
         {
             Subsystem->AddMappingContext(InputMappingContext, 0);
         }
+    }
+
+    if (CrouchCurve)
+    {
+        FOnTimelineFloat CrouchProgress;
+        CrouchProgress.BindUFunction(this, FName("UpdateCrouch"));
+        CrouchTimeline->AddInterpFloat(CrouchCurve, CrouchProgress);
     }
 }
 
@@ -66,6 +84,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &APlayerCharacter::StartSprint);
         EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopSprint);
+
+        EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::StartCrouch);
+        EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopCrouch);
     }
 }
 
@@ -98,4 +119,29 @@ void APlayerCharacter::StartSprint()
 void APlayerCharacter::StopSprint()
 {
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed; // Reset to normal speed
+}
+
+void APlayerCharacter::StartCrouch()
+{
+    if (CrouchTimeline && CrouchCurve)
+    {
+        CrouchTimeline->PlayFromStart();
+    }
+}
+
+void APlayerCharacter::StopCrouch()
+{
+    if (CrouchTimeline && CrouchCurve)
+    {
+        CrouchTimeline->Reverse();
+    }
+}
+
+void APlayerCharacter::UpdateCrouch(float Value)
+{
+    float NewHeight = FMath::Lerp(OriginalCapsuleHalfHeight, CrouchCapsuleHalfHeight, Value);
+    GetCapsuleComponent()->SetCapsuleHalfHeight(NewHeight);
+
+    FVector MeshOffset = FVector(0, 0, NewHeight - OriginalCapsuleHalfHeight);
+    CameraComponent->SetRelativeLocation(FVector(0, 0, 64.0f) + MeshOffset);
 }

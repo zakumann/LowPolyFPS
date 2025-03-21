@@ -49,6 +49,20 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* SprintAction;
 
+    UPROPERTY(EditAnywhere, Category = "Input")
+    class UInputAction* CrouchAction;
+
+    // Crouch Timeline
+    UPROPERTY()
+    class UTimelineComponent* CrouchTimeline;
+
+    UPROPERTY(EditAnywhere, Category = "Crouch")
+    class UCurveFloat* CrouchCurve;
+
+    // Original & Target Capsule Heights
+    float OriginalCapsuleHalfHeight;
+    float CrouchCapsuleHalfHeight;
+
     // Movement Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
@@ -56,6 +70,13 @@ protected:
     // Sprint and Jump Functions
     void StartSprint();
     void StopSprint();
+
+    // Crouch Functions
+    void StartCrouch();
+    void StopCrouch();
+
+    UFUNCTION()
+    void UpdateCrouch(float Value);
 
     /** Movement Speed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
