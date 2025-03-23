@@ -19,18 +19,13 @@ APlayerCharacter::APlayerCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+    GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
+
     // Create Camera Component
     CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-    CameraComponent->SetupAttachment(RootComponent);
-    CameraComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 64.0f));
+    CameraComponent->SetupAttachment(GetCapsuleComponent());
+    CameraComponent->SetRelativeLocation(FVector(-10.0f, 0.0f, 64.0f));
     CameraComponent->bUsePawnControlRotation = true;
-
-    // Timeline Component for Smooth Crouch
-    CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CrouchTimeline"));
-
-    // Default Capsule Sizes
-    OriginalCapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-    CrouchCapsuleHalfHeight = OriginalCapsuleHalfHeight * 0.5f; // Half the size
 
     // Create First-Person Arms Mesh
     FPArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonArms"));
@@ -52,19 +47,13 @@ void APlayerCharacter::BeginPlay()
             Subsystem->AddMappingContext(InputMappingContext, 0);
         }
     }
-
-    if (CrouchCurve)
-    {
-        FOnTimelineFloat CrouchProgress;
-        CrouchProgress.BindUFunction(this, FName("UpdateCrouch"));
-        CrouchTimeline->AddInterpFloat(CrouchCurve, CrouchProgress);
-    }
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 }
 
 // Called to bind functionality to input
@@ -123,25 +112,15 @@ void APlayerCharacter::StopSprint()
 
 void APlayerCharacter::StartCrouch()
 {
-    if (CrouchTimeline && CrouchCurve)
-    {
-        CrouchTimeline->PlayFromStart();
-    }
-}
+    GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
+    ACharacter::Crouch();
 
+    isCrouching = true;
+}
 void APlayerCharacter::StopCrouch()
 {
-    if (CrouchTimeline && CrouchCurve)
-    {
-        CrouchTimeline->Reverse();
-    }
-}
+    GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+    ACharacter::UnCrouch();
 
-void APlayerCharacter::UpdateCrouch(float Value)
-{
-    float NewHeight = FMath::Lerp(OriginalCapsuleHalfHeight, CrouchCapsuleHalfHeight, Value);
-    GetCapsuleComponent()->SetCapsuleHalfHeight(NewHeight);
-
-    FVector MeshOffset = FVector(0, 0, NewHeight - OriginalCapsuleHalfHeight);
-    CameraComponent->SetRelativeLocation(FVector(0, 0, 64.0f) + MeshOffset);
+    isCrouching = false;
 }

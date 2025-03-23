@@ -17,6 +17,12 @@ public:
 	// Sets default values for this character's properties
 	APlayerCharacter();
 
+    // Called every frame
+    virtual void Tick(float DeltaTime) override;
+
+    // Called to bind functionality to input
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
     // First-Person Camera
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     class UCameraComponent* FirstPersonCamera;
@@ -52,17 +58,6 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* CrouchAction;
 
-    // Crouch Timeline
-    UPROPERTY()
-    class UTimelineComponent* CrouchTimeline;
-
-    UPROPERTY(EditAnywhere, Category = "Crouch")
-    class UCurveFloat* CrouchCurve;
-
-    // Original & Target Capsule Heights
-    float OriginalCapsuleHalfHeight;
-    float CrouchCapsuleHalfHeight;
-
     // Movement Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
@@ -71,12 +66,8 @@ protected:
     void StartSprint();
     void StopSprint();
 
-    // Crouch Functions
     void StartCrouch();
     void StopCrouch();
-
-    UFUNCTION()
-    void UpdateCrouch(float Value);
 
     /** Movement Speed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -85,10 +76,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float SprintSpeed = 1200.0f;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+    float CrouchSpeed= 450.0f;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    UPROPERTY(EditAnywhere, Category = Gameplay)
+    bool isCrouching;
 };
