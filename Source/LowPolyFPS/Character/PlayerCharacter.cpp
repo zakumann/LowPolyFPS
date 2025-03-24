@@ -32,6 +32,8 @@ APlayerCharacter::APlayerCharacter()
     FPArmsMesh->SetupAttachment(CameraComponent);
     FPArmsMesh->bCastDynamicShadow = false;
     FPArmsMesh->CastShadow = false;
+
+    CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CrouchTimeline"));
 }
 
 // Called when the game starts or when spawned
@@ -46,6 +48,14 @@ void APlayerCharacter::BeginPlay()
         {
             Subsystem->AddMappingContext(InputMappingContext, 0);
         }
+    }
+
+    if (CrouchCurve)
+    {
+        FOnTimelineFloat ProgressFunction;
+        ProgressFunction.BindUFunction(this, FName("UpdateCrouch"));
+
+        CrouchTimeline->AddInterpFloat(CrouchCurve, ProgressFunction);
     }
 }
 
@@ -112,6 +122,9 @@ void APlayerCharacter::StopSprint()
 
 void APlayerCharacter::StartCrouch()
 {
+    if (CrouchTimeline->IsPlaying()) return;
+
+    CrouchTimeline->PlayFromStart();
     GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
     ACharacter::Crouch();
 
@@ -119,8 +132,16 @@ void APlayerCharacter::StartCrouch()
 }
 void APlayerCharacter::StopCrouch()
 {
+    if (CrouchTimeline->IsPlaying()) return;
+
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     ACharacter::UnCrouch();
 
     isCrouching = false;
+}
+
+void APlayerCharacter::UpdateCrouch(float Value)
+{
+    float NewHeight = FMath::Lerp(StandHeight, CrouchHeight, Value);
+    GetCapsuleComponent()->SetCapsuleHalfHeight(NewHeight);
 }

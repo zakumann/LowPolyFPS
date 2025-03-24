@@ -79,6 +79,27 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float CrouchSpeed= 450.0f;
 
+    UPROPERTY(EditAnywhere, Category = "Crouch")
+    float Crouching = 0.2f;
+
+    // Timeline for smooth crouching
+    UPROPERTY()
+    class UTimelineComponent* CrouchTimeline;
+
+    // Curve asset for timeline interpolation
+    UPROPERTY(EditAnywhere, Category = "Crouch")
+    UCurveFloat* CrouchCurve;
+
+    // Crouch & Stand Heights
+    UPROPERTY(EditAnywhere, Category = "Crouch")
+    float CrouchHeight = 40.0f;
+
+    UPROPERTY(EditAnywhere, Category = "Crouch")
+    float StandHeight = 88.0f;
+
+    UFUNCTION()
+    void UpdateCrouch(float Value);
+
     UPROPERTY(EditAnywhere, Category = Gameplay)
     bool isCrouching;
 };
