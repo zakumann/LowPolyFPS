@@ -122,9 +122,6 @@ void APlayerCharacter::StopSprint()
 
 void APlayerCharacter::StartCrouch()
 {
-    if (CrouchTimeline->IsPlaying()) return;
-
-    CrouchTimeline->PlayFromStart();
     GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
     ACharacter::Crouch();
 
@@ -132,8 +129,6 @@ void APlayerCharacter::StartCrouch()
 }
 void APlayerCharacter::StopCrouch()
 {
-    if (CrouchTimeline->IsPlaying()) return;
-
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     ACharacter::UnCrouch();
 
