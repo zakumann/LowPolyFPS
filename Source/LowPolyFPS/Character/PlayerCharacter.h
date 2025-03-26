@@ -79,9 +79,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float CrouchSpeed= 450.0f;
 
-    UPROPERTY(EditAnywhere, Category = "Crouch")
-    float Crouching = 0.2f;
-
     // Timeline for smooth crouching
     UPROPERTY()
     class UTimelineComponent* CrouchTimeline;
@@ -97,9 +94,15 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Crouch")
     float StandHeight = 88.0f;
 
+    /** Stores the original camera position for smooth interpolation */
+    FVector DefaultCameraPosition;
+
     UFUNCTION()
     void UpdateCrouch(float Value);
 
     UPROPERTY(EditAnywhere, Category = Gameplay)
-    bool isCrouching;
+    bool isCrouching = false;
+
+    UFUNCTION()
+    void OnCrouchTimelineFinished();
 };

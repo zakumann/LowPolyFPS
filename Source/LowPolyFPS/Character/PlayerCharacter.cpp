@@ -22,10 +22,10 @@ APlayerCharacter::APlayerCharacter()
     GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
     // Create Camera Component
-    CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
-    CameraComponent->SetupAttachment(GetCapsuleComponent());
-    CameraComponent->SetRelativeLocation(FVector(-10.0f, 0.0f, 64.0f));
-    CameraComponent->bUsePawnControlRotation = true;
+    FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+    FirstPersonCamera->SetupAttachment(GetCapsuleComponent());
+    FirstPersonCamera->SetRelativeLocation(FVector(-10.0f, 0.0f, 64.0f));
+    FirstPersonCamera->bUsePawnControlRotation = true;
 
     // Create First-Person Arms Mesh
     FPArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonArms"));
@@ -34,6 +34,8 @@ APlayerCharacter::APlayerCharacter()
     FPArmsMesh->CastShadow = false;
 
     CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CrouchTimeline"));
+
+    DefaultCameraPosition = FirstPersonCamera->GetRelativeLocation();
 }
 
 // Called when the game starts or when spawned
@@ -56,6 +58,10 @@ void APlayerCharacter::BeginPlay()
         ProgressFunction.BindUFunction(this, FName("UpdateCrouch"));
 
         CrouchTimeline->AddInterpFloat(CrouchCurve, ProgressFunction);
+
+        FOnTimelineEventStatic TimelineFinished;
+        TimelineFinished.BindUFunction(this, FName("OnCrouchTimelineFinished"));
+        CrouchTimeline->SetTimelineFinishedFunc(TimelineFinished);
     }
 }
 
@@ -63,7 +69,6 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -123,15 +128,14 @@ void APlayerCharacter::StopSprint()
 void APlayerCharacter::StartCrouch()
 {
     GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
-    ACharacter::Crouch();
-
+    CrouchTimeline->PlayFromStart();
     isCrouching = true;
 }
+
 void APlayerCharacter::StopCrouch()
 {
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-    ACharacter::UnCrouch();
-
+    CrouchTimeline->Reverse();
     isCrouching = false;
 }
 
@@ -139,4 +143,20 @@ void APlayerCharacter::UpdateCrouch(float Value)
 {
     float NewHeight = FMath::Lerp(StandHeight, CrouchHeight, Value);
     GetCapsuleComponent()->SetCapsuleHalfHeight(NewHeight);
+
+    // Adjust camera smoothly
+    FVector CameraOffset = FVector(0.0f, 0.0f, NewHeight - StandHeight);
+    FirstPersonCamera->SetRelativeLocation(DefaultCameraPosition + CameraOffset);
+}
+
+void APlayerCharacter::OnCrouchTimelineFinished()
+{
+    if (isCrouching)
+    {
+        ACharacter::Crouch();
+    }
+    else
+    {
+        ACharacter::UnCrouch();
+    }
 }
