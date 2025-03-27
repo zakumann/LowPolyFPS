@@ -128,14 +128,14 @@ void APlayerCharacter::StopSprint()
 void APlayerCharacter::StartCrouch()
 {
     GetCharacterMovement()->MaxWalkSpeed = CrouchSpeed;
-    CrouchTimeline->PlayFromStart();
+    ACharacter::Crouch();
     isCrouching = true;
 }
 
 void APlayerCharacter::StopCrouch()
 {
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-    CrouchTimeline->Reverse();
+    ACharacter::UnCrouch();
     isCrouching = false;
 }
 
@@ -147,16 +147,4 @@ void APlayerCharacter::UpdateCrouch(float Value)
     // Adjust camera smoothly
     FVector CameraOffset = FVector(0.0f, 0.0f, NewHeight - StandHeight);
     FirstPersonCamera->SetRelativeLocation(DefaultCameraPosition + CameraOffset);
-}
-
-void APlayerCharacter::OnCrouchTimelineFinished()
-{
-    if (isCrouching)
-    {
-        ACharacter::Crouch();
-    }
-    else
-    {
-        ACharacter::UnCrouch();
-    }
 }

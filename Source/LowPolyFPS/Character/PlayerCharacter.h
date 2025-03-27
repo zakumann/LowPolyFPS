@@ -102,7 +102,4 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = Gameplay)
     bool isCrouching = false;
-
-    UFUNCTION()
-    void OnCrouchTimelineFinished();
 };
