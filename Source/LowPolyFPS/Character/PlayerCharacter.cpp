@@ -29,7 +29,7 @@ APlayerCharacter::APlayerCharacter()
 
     // Create First-Person Arms Mesh
     FPArmsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FirstPersonArms"));
-    FPArmsMesh->SetupAttachment(CameraComponent);
+    FPArmsMesh->SetupAttachment(FirstPersonCamera);
     FPArmsMesh->bCastDynamicShadow = false;
     FPArmsMesh->CastShadow = false;
 
