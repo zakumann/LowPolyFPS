@@ -13,13 +13,19 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+//Door
+#include "GameFramework/Actor.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
+#include "LowPolyFPS/Door/Door.h"
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
+    GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
     // Create Camera Component
     FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
@@ -51,18 +57,6 @@ void APlayerCharacter::BeginPlay()
             Subsystem->AddMappingContext(InputMappingContext, 0);
         }
     }
-
-    if (CrouchCurve)
-    {
-        FOnTimelineFloat ProgressFunction;
-        ProgressFunction.BindUFunction(this, FName("UpdateCrouch"));
-
-        CrouchTimeline->AddInterpFloat(CrouchCurve, ProgressFunction);
-
-        FOnTimelineEventStatic TimelineFinished;
-        TimelineFinished.BindUFunction(this, FName("OnCrouchTimelineFinished"));
-        CrouchTimeline->SetTimelineFinishedFunc(TimelineFinished);
-    }
 }
 
 // Called every frame
@@ -91,6 +85,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::StartCrouch);
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopCrouch);
+
+        //Interact
+        EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
     }
 }
 
@@ -137,6 +134,24 @@ void APlayerCharacter::StopCrouch()
     GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
     ACharacter::UnCrouch();
     isCrouching = false;
+}
+
+void APlayerCharacter::Interact()
+{
+    FHitResult HitResult;
+    FVector Start = FirstPersonCamera->GetComponentLocation();
+    FVector End = Start + FirstPersonCamera->GetForwardVector() * InteractLineTraceLength;
+    GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
+    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.f);
+    DrawDebugPoint(GetWorld(), End, 20.f, FColor::Red, false, 2.f);
+    DrawDebugPoint(GetWorld(), Start, 20.f, FColor::Blue, false, 2.f);
+
+    ADoor* Door = Cast<ADoor>(HitResult.GetActor());
+    if (Door)
+    {
+        Door->PlayerCharacter = this;
+        Door->OnInteract();
+    }
 }
 
 void APlayerCharacter::UpdateCrouch(float Value)

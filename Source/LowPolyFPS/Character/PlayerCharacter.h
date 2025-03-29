@@ -58,6 +58,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* CrouchAction;
 
+    UPROPERTY(EditAnywhere, Category = "Input")
+    class UInputAction* InteractAction;
+
     // Movement Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
@@ -68,6 +71,8 @@ protected:
 
     void StartCrouch();
     void StopCrouch();
+
+    void Interact();
 
     /** Movement Speed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -102,4 +107,11 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = Gameplay)
     bool isCrouching = false;
+
+    UPROPERTY(EditAnywhere)
+    float InteractLineTraceLength = 350.f;
+
+    // Current interactable object
+    UPROPERTY()
+    class ADoor* CurrentInteractable;
 };
