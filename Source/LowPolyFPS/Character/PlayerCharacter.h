@@ -113,5 +113,5 @@ protected:
 
     // Current interactable object
     UPROPERTY()
-    class ADoor* CurrentInteractable;
+    class ADoorActor* CurrentInteractable;
 };

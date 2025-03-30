@@ -5,16 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/TimelineComponent.h"
-#include "Door.generated.h"
+#include "DoorActor.generated.h"
 
 UCLASS()
-class LOWPOLYFPS_API ADoor : public AActor
+class LOWPOLYFPS_API ADoorActor : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ADoor();
+	ADoorActor();
 
 protected:
 	// Called when the game starts or when spawned

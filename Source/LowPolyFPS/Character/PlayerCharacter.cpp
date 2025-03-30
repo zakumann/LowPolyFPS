@@ -17,7 +17,7 @@
 #include "GameFramework/Actor.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
-#include "LowPolyFPS/Door/Door.h"
+#include "LowPolyFPS/Door/DoorActor.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -146,7 +146,7 @@ void APlayerCharacter::Interact()
     DrawDebugPoint(GetWorld(), End, 20.f, FColor::Red, false, 2.f);
     DrawDebugPoint(GetWorld(), Start, 20.f, FColor::Blue, false, 2.f);
 
-    ADoor* Door = Cast<ADoor>(HitResult.GetActor());
+    ADoorActor* Door = Cast<ADoorActor>(HitResult.GetActor());
     if (Door)
     {
         Door->PlayerCharacter = this;
