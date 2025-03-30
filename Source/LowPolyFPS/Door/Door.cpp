@@ -3,7 +3,9 @@
 
 #include "LowPolyFPS/Door/Door.h"
 #include "LowPolyFPS/Character/PlayerCharacter.h"
+#include "GameFramework/Actor.h"
 #include <Kismet/GameplayStatics.h>
+#include "Components/BoxComponent.h"
 
 // Sets default values
 ADoor::ADoor()
@@ -19,6 +21,16 @@ ADoor::ADoor()
 
 	Door = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Door"));
 	Door->SetupAttachment(DoorFrame);
+
+	// Collision Box
+	DoorCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("DoorCollision"));
+	DoorCollision->SetupAttachment(DoorFrame);
+
+	// Set Collision Response
+	DoorCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly); // Only detect overlaps, no physics
+	DoorCollision->SetCollisionResponseToAllChannels(ECR_Overlap); // Default to overlap for all
+	DoorCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // Block visibility channel
+
 
 	bIsDoorClosed = true;
 }
@@ -43,7 +55,6 @@ void ADoor::BeginPlay()
 void ADoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 	Timeline.TickTimeline(DeltaTime);
 }
 
@@ -67,9 +78,7 @@ void ADoor::OpenDoor(float Value)
 {
 	//float Angle = bDoorOnSameSide ? DoorRotateAngle : -DoorRotateAngle;
 	float Angle = bDoorOnSameSide ? DoorRotateAngle : DoorRotateAngle;
-
 	FRotator Rot = FRotator(0.0f, Angle * Value, 0.0f);
-
 	Door->SetRelativeRotation(Rot);
 }
 

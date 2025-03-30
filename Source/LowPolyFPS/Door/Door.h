@@ -29,17 +29,22 @@ public:
 	class APlayerCharacter* PlayerCharacter;
 
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Mesh")
+	UPROPERTY(VisibleAnywhere, Category = "Door Components")
 	class UStaticMeshComponent* DoorFrame;
 
-	UPROPERTY(VisibleAnywhere, Category = "Mesh")
+	UPROPERTY(VisibleAnywhere, Category = "Door Components")
 	class UStaticMeshComponent* Door;
 
-protected:
+	UPROPERTY(VisibleAnywhere, Category = "Door Components")
+	class UBoxComponent* DoorCollision;
 
+protected:
+	// Timeline for door movement
+	UPROPERTY()
 	FTimeline Timeline;
+
 	UPROPERTY(EditAnywhere)
-	UCurveFloat* CurveFloat;
+	class UCurveFloat* CurveFloat;
 
 	bool bIsDoorClosed = true;
 
@@ -49,7 +54,7 @@ protected:
 	UFUNCTION()
 	void OpenDoor(float Value); // Bind function
 
-	bool bDoorOnSameSide;
+	bool bDoorOnSameSide = false;
 	void SetDoorOnSameSide();
 
 };
