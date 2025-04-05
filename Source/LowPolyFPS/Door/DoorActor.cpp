@@ -31,6 +31,7 @@ ADoorActor::ADoorActor()
 	DoorCollision->SetCollisionResponseToAllChannels(ECR_Overlap); // Default to overlap for all
 	DoorCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // Block visibility channel
 
+	DoorCollision->SetRelativeLocation(FVector(-115.0f, 10.0f, 0.0f));
 
 	bIsDoorClosed = true;
 
