@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "LowPolyFPS/Weapon/BaseWeapon.h"
 #include "PlayerCharacter.generated.h"
 
 struct FInputActionValue;
@@ -26,6 +27,12 @@ public:
     // First-Person Camera
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
     class UCameraComponent* FirstPersonCamera;
+
+    // Weapon reference
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+    TSubclassOf<ABaseWeapon> StarterWeaponClass;
+
+    void SpawnStarterWeapon();
 
 protected:
 	// Called when the game starts or when spawned
@@ -61,6 +68,14 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* InteractAction;
 
+    // Input
+    UPROPERTY(EditAnywhere, Category = "Input")
+    class UInputAction* FireAction;
+
+    // Weapon
+    UPROPERTY()
+    class ABaseWeapon* CurrentWeapon;
+
     // Movement Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
@@ -73,6 +88,7 @@ protected:
     void StopCrouch();
 
     void Interact();
+    void Fire();
 
     /** Movement Speed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -101,9 +117,6 @@ protected:
 
     /** Stores the original camera position for smooth interpolation */
     FVector DefaultCameraPosition;
-
-    UFUNCTION()
-    void UpdateCrouch(float Value);
 
     UPROPERTY(EditAnywhere, Category = Gameplay)
     bool isCrouching = false;

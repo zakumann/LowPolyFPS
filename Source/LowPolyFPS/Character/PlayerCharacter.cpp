@@ -19,6 +19,10 @@
 #include "DrawDebugHelpers.h"
 #include "LowPolyFPS/Door/DoorActor.h"
 
+//Weapon
+#include "LowPolyFPS/Weapon/BaseWeapon.h"
+#include <LowPolyFPS/Weapon/Pistol.h>
+
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
@@ -30,7 +34,7 @@ APlayerCharacter::APlayerCharacter()
     // Create Camera Component
     FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
     FirstPersonCamera->SetupAttachment(GetCapsuleComponent());
-    FirstPersonCamera->SetRelativeLocation(FVector(-10.0f, 0.0f, 64.0f));
+    FirstPersonCamera->SetRelativeLocation(FVector(-29.0f, 0.0f, 44.0f));
     FirstPersonCamera->bUsePawnControlRotation = true;
 
     // Create First-Person Arms Mesh
@@ -38,11 +42,11 @@ APlayerCharacter::APlayerCharacter()
     FPArmsMesh->SetupAttachment(FirstPersonCamera);
     FPArmsMesh->bCastDynamicShadow = false;
     FPArmsMesh->CastShadow = false;
-
-    CrouchTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("CrouchTimeline"));
-
-    DefaultCameraPosition = FirstPersonCamera->GetRelativeLocation();
+    FPArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    FPArmsMesh->bRenderCustomDepth = true;
+    FPArmsMesh->SetCustomDepthStencilValue(1); // Optional if using stencil mask
 }
+
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
@@ -57,6 +61,21 @@ void APlayerCharacter::BeginPlay()
             Subsystem->AddMappingContext(InputMappingContext, 0);
         }
     }
+
+    // Spawn and attach pistol
+    if (UWorld* World = GetWorld())
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+
+        CurrentWeapon = World->SpawnActor<APistol>(APistol::StaticClass(), SpawnParams);
+        if (CurrentWeapon)
+        {
+            CurrentWeapon->AttachToComponent(FPArmsMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket")); // Make sure the socket exists
+        }
+    }
+
+    SpawnStarterWeapon();
 }
 
 // Called every frame
@@ -86,8 +105,10 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &APlayerCharacter::StartCrouch);
         EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &APlayerCharacter::StopCrouch);
 
-        //Interact
+        // Interact
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
+        // Fire
+        EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &APlayerCharacter::Fire);
     }
 }
 
@@ -142,9 +163,6 @@ void APlayerCharacter::Interact()
     FVector Start = FirstPersonCamera->GetComponentLocation();
     FVector End = Start + FirstPersonCamera->GetForwardVector() * InteractLineTraceLength;
     GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
-    DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 2.f);
-    DrawDebugPoint(GetWorld(), End, 20.f, FColor::Red, false, 2.f);
-    DrawDebugPoint(GetWorld(), Start, 20.f, FColor::Blue, false, 2.f);
 
     ADoorActor* Door = Cast<ADoorActor>(HitResult.GetActor());
     if (Door)
@@ -154,12 +172,35 @@ void APlayerCharacter::Interact()
     }
 }
 
-void APlayerCharacter::UpdateCrouch(float Value)
+void APlayerCharacter::Fire()
 {
-    float NewHeight = FMath::Lerp(StandHeight, CrouchHeight, Value);
-    GetCapsuleComponent()->SetCapsuleHalfHeight(NewHeight);
+    if (CurrentWeapon)
+    {
+        CurrentWeapon->Fire();
+    }
+}
 
-    // Adjust camera smoothly
-    FVector CameraOffset = FVector(0.0f, 0.0f, NewHeight - StandHeight);
-    FirstPersonCamera->SetRelativeLocation(DefaultCameraPosition + CameraOffset);
+void APlayerCharacter::SpawnStarterWeapon()
+{
+    if (StarterWeaponClass)
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.Owner = this;
+        CurrentWeapon = GetWorld()->SpawnActor<ABaseWeapon>(StarterWeaponClass, SpawnParams);
+
+        if (CurrentWeapon)
+        {
+            CurrentWeapon->AttachToComponent(FPArmsMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
+            CurrentWeapon->Fire();
+
+            TArray<UPrimitiveComponent*> WeaponComponents;
+            CurrentWeapon->GetComponents<UPrimitiveComponent>(WeaponComponents);
+            for (auto* Comp : WeaponComponents)
+            {
+                Comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                Comp->bRenderCustomDepth = true;
+                Comp->SetCustomDepthStencilValue(1);
+            }
+        }
+    }
 }
