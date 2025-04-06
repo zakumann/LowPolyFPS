@@ -20,7 +20,7 @@ public:
     USkeletalMeshComponent* GetWeaponMesh() const;
 
 protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon", meta = (AllowPrivateAccess = "true"))
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
     USkeletalMeshComponent* WeaponMesh;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
