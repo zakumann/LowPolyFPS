@@ -34,6 +34,14 @@ public:
 
     void SpawnStarterWeapon();
 
+
+    //Lader
+    UPROPERTY(BlueprintReadWrite)
+    bool bIsOnLadder = false;
+
+    UPROPERTY()
+    class ALadder* CurrentLadder;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -68,6 +76,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* InteractAction;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    class UInputAction* ClimbUpDownAction;
+
     // Input
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* FireAction;
@@ -88,6 +99,7 @@ protected:
     void StopCrouch();
 
     void Interact();
+    void ClimbLadder(const FInputActionValue& Value);
     void Fire();
 
     /** Movement Speed */
@@ -96,6 +108,8 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float SprintSpeed = 1200.0f;
+
+    virtual void Landed(const FHitResult& Hit) override;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float CrouchSpeed= 450.0f;

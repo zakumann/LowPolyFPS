@@ -12,6 +12,7 @@
 #include "Components/TimelineComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/PlayerController.h"
 
 //Door
 #include "GameFramework/Actor.h"
@@ -45,6 +46,8 @@ APlayerCharacter::APlayerCharacter()
     FPArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     FPArmsMesh->bRenderCustomDepth = true;
     FPArmsMesh->SetCustomDepthStencilValue(1); // Optional if using stencil mask
+
+    GetCharacterMovement()->bOrientRotationToMovement = false;
 }
 
 
@@ -107,6 +110,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
         // Interact
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
+        // Climb
+        EnhancedInputComponent->BindAction(ClimbUpDownAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ClimbLadder);
+
         // Fire
         EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &APlayerCharacter::Fire);
     }
@@ -115,7 +121,9 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
     FVector2D MovementVector = Value.Get<FVector2D>();
-    if (Controller != nullptr)
+    if (!Controller) return;
+
+    if (!bIsOnLadder)
     {
         AddMovementInput(GetActorForwardVector(), MovementVector.Y);
         AddMovementInput(GetActorRightVector(), MovementVector.X);
@@ -159,6 +167,7 @@ void APlayerCharacter::StopCrouch()
 
 void APlayerCharacter::Interact()
 {
+    // raycast range
     FHitResult HitResult;
     FVector Start = FirstPersonCamera->GetComponentLocation();
     FVector End = Start + FirstPersonCamera->GetForwardVector() * InteractLineTraceLength;
@@ -170,6 +179,30 @@ void APlayerCharacter::Interact()
         Door->PlayerCharacter = this;
         Door->OnInteract();
     }
+    //Ladder status
+    if (CurrentLadder)
+    {
+        // Toggle climbing state
+        if (!bIsOnLadder)
+        {
+            bIsOnLadder = true;
+            GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+        }
+        else
+        {
+            bIsOnLadder = false;
+            GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        }
+    }
+}
+
+void APlayerCharacter::ClimbLadder(const FInputActionValue& Value)
+{
+    if (bIsOnLadder)
+    {
+        float Direction = Value.Get<float>();
+        AddMovementInput(FVector::UpVector, Direction);
+    }
 }
 
 void APlayerCharacter::Fire()
@@ -177,6 +210,18 @@ void APlayerCharacter::Fire()
     if (CurrentWeapon)
     {
         CurrentWeapon->Fire();
+    }
+}
+
+void APlayerCharacter::Landed(const FHitResult& Hit)
+{
+    Super::Landed(Hit);
+
+    // Exit ladder mode and switch to walking
+    if (bIsOnLadder)
+    {
+        bIsOnLadder = false;
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
     }
 }
 
