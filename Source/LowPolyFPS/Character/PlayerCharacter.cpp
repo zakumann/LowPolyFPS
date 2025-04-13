@@ -48,8 +48,6 @@ APlayerCharacter::APlayerCharacter()
     FPArmsMesh->SetupAttachment(FirstPersonCamera);
     FPArmsMesh->bCastDynamicShadow = false;
     FPArmsMesh->CastShadow = false;
-    FPArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    FPArmsMesh->bRenderCustomDepth = true;
 
     WeaponIndex = 0;
 }
@@ -207,17 +205,26 @@ void APlayerCharacter::Fire()
     FVector FireRot = FirstPersonCamera->GetComponentRotation().Vector();
     FVector FireEnd = FireStart + FireRot * 2000.0f;
 
-    FHitResult HitResult;
-    FCollisionObjectQueryParams CollisionQuery;
+    TArray<FHitResult> HitResults;
     FCollisionQueryParams CollisionParams;
+    FCollisionResponseParams CollisionResponse;
     CollisionParams.AddIgnoredActor(this);
 
-    if (GetWorld()->LineTraceSingleByObjectType(OUT HitResult, FireStart, FireEnd, CollisionQuery, CollisionParams))
+    if (GetWorld()->LineTraceMultiByChannel(OUT HitResults, FireStart, FireEnd, ECollisionChannel::ECC_Visibility, CollisionParams, CollisionResponse))
     {
-        if (AEnemyBase* Enemy = Cast<AEnemyBase>(HitResult.GetActor()))
+        for (FHitResult& Result : HitResults)
         {
-            UE_LOG(LogTemp, Warning, TEXT("Enemy HIT %s"), *Enemy->GetName());
+            if (AActor* HitActor = Result.GetActor())
+            {
+                UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *HitActor->GetName());
+            }
         }
+
+        //if (AEnemyBase* Enemy = Cast<AEnemyBase>(HitResult.GetActor()))
+        //{
+        //    UE_LOG(LogTemp, Warning, TEXT("Enemy HIT %s"), *Enemy->GetName());
+        //    //Enemy->Hit(this);
+        //}
     }
 
     DrawDebugLine(GetWorld(), FireStart, FireEnd, FColor::Red, false, 2.0f, 0, 3.0f);

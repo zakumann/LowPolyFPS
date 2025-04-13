@@ -9,7 +9,6 @@
 ABaseWeapon::ABaseWeapon()
 {
     WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
-    SetRootComponent(WeaponMesh);
 
     WeaponName = "Default";
     WeaponMaxAmmo = 255;
@@ -19,9 +18,11 @@ ABaseWeapon::ABaseWeapon()
     CurrentMagazineAmmo = MagazineMaxAmmo;
 
     WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    WeaponMesh->SetOnlyOwnerSee(true); // Hide from others, visible to owner
+    WeaponMesh->SetOnlyOwnerSee(false);
     WeaponMesh->bCastDynamicShadow = false;
     WeaponMesh->CastShadow = false;
+    WeaponMesh->SetVisibility(true);
+    WeaponMesh->SetHiddenInGame(false);
 }
 
 void ABaseWeapon::Fire()

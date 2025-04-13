@@ -19,6 +19,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 public:	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ladder")
 	class UStaticMeshComponent* LadderMesh;
@@ -33,4 +35,8 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor,
 		class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+private:
+	UPROPERTY()
+	class APlayerCharacter* CurrentPlayer;
 };

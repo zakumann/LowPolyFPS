@@ -15,7 +15,7 @@ public:
     ABaseWeapon();
 
 protected:
-    UPROPERTY(EditAnywhere, Category = "Weapon")
+    UPROPERTY(VisibleAnywhere, Category = "Weapon")
     class USkeletalMeshComponent* WeaponMesh;
 
     UPROPERTY(EditAnywhere, Category = "Weapon")

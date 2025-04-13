@@ -39,11 +39,29 @@ void ALadder::BeginPlay()
 	LadderTrigger->OnComponentEndOverlap.AddDynamic(this, &ALadder::OnOverlapEnd);
 }
 
+void ALadder::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// If player is climbing, check if they are still inside the ladder trigger
+	if (IsValid(CurrentPlayer) && CurrentPlayer->bIsOnLadder)
+	{
+		if (!LadderTrigger->IsOverlappingActor(CurrentPlayer))
+		{
+			// Player moved outside the trigger while climbing - force them off the ladder
+			CurrentPlayer->bIsOnLadder = false;
+			CurrentPlayer->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+			CurrentPlayer = nullptr;
+		}
+	}
+}
+
 void ALadder::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor))
 	{
-		Player->CurrentLadder = this; // Store ladder reference
+		Player->CurrentLadder = this;
+		CurrentPlayer = Player; // <--- store local reference too
 	}
 }
 
@@ -58,6 +76,11 @@ void ALadder::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherAct
 		{
 			Player->bIsOnLadder = false;
 			Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		}
+
+		if (Player == CurrentPlayer)
+		{
+			CurrentPlayer = nullptr;
 		}
 	}
 }
