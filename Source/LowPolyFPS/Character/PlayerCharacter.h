@@ -32,15 +32,21 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = "Weapon")
     TSubclassOf<ABaseWeapon> StarterWeaponClass;
 
-    void SpawnStarterWeapon();
-
-
     //Lader
     UPROPERTY(BlueprintReadWrite)
     bool bIsOnLadder = false;
 
     UPROPERTY()
     class ALadder* CurrentLadder;
+
+protected:
+
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    TSubclassOf<class ABaseWeapon> StartingWeaponClass;
+
+    class ABaseWeapon* CurrentWeapon;
+    int32 WeaponIndex;
+    TArray<ABaseWeapon*> WeaponArray;
 
 protected:
 	// Called when the game starts or when spawned
@@ -83,10 +89,6 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* FireAction;
 
-    // Weapon
-    UPROPERTY()
-    class ABaseWeapon* CurrentWeapon;
-
     // Movement Functions
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
@@ -113,10 +115,6 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float CrouchSpeed= 450.0f;
-
-    // Timeline for smooth crouching
-    UPROPERTY()
-    class UTimelineComponent* CrouchTimeline;
 
     // Curve asset for timeline interpolation
     UPROPERTY(EditAnywhere, Category = "Crouch")

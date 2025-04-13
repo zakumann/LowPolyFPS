@@ -8,10 +8,15 @@
 // Sets default values
 ABaseWeapon::ABaseWeapon()
 {
-    PrimaryActorTick.bCanEverTick = false;
-
     WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMesh"));
     SetRootComponent(WeaponMesh);
+
+    WeaponName = "Default";
+    WeaponMaxAmmo = 255;
+    MagazineMaxAmmo = 30;
+
+    CurrentTotalAmmo = WeaponMaxAmmo;
+    CurrentMagazineAmmo = MagazineMaxAmmo;
 
     WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     WeaponMesh->SetOnlyOwnerSee(true); // Hide from others, visible to owner
@@ -21,17 +26,14 @@ ABaseWeapon::ABaseWeapon()
 
 void ABaseWeapon::Fire()
 {
-    if (WeaponMesh && FireMontage)
-    {
-        UAnimInstance* AnimInstance = WeaponMesh->GetAnimInstance();
-        if (AnimInstance)
-        {
-            AnimInstance->Montage_Play(FireMontage);
-        }
-    }
 }
 
-USkeletalMeshComponent* ABaseWeapon::GetWeaponMesh() const
+void ABaseWeapon::Reload()
 {
-    return WeaponMesh;
 }
+
+TArray<int> ABaseWeapon::GetCurrentAmmo()
+{
+    return { CurrentMagazineAmmo, CurrentTotalAmmo };
+}
+

@@ -14,15 +14,33 @@ class LOWPOLYFPS_API ABaseWeapon : public AActor
 public:
     ABaseWeapon();
 
-    virtual void Fire();
-
-    UFUNCTION(BlueprintCallable, Category = "Weapon")
-    USkeletalMeshComponent* GetWeaponMesh() const;
-
 protected:
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
-    USkeletalMeshComponent* WeaponMesh;
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    class USkeletalMeshComponent* WeaponMesh;
 
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
-    UAnimMontage* FireMontage;
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    class UAnimationAsset* FireAnimation;
+
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    class UAnimationAsset* ReloadAnimation;
+
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    FString WeaponName;
+
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    int32 WeaponMaxAmmo;
+
+    UPROPERTY(EditAnywhere, Category = "Weapon")
+    int32 MagazineMaxAmmo;
+
+    int32 CurrentTotalAmmo;
+    int32 CurrentMagazineAmmo;
+
+public:
+    virtual void Fire(); 
+
+    virtual void Reload();
+
+    //First element is Magazine Ammo, second element is Total Ammo
+    TArray<int> GetCurrentAmmo();
 };

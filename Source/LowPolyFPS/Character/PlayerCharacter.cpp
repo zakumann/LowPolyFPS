@@ -22,7 +22,12 @@
 
 //Weapon
 #include "LowPolyFPS/Weapon/BaseWeapon.h"
-#include <LowPolyFPS/Weapon/Pistol.h>
+
+//Ladder
+#include "LowPolyFPS/Ladder.h"
+
+//Enemy
+#include "LowPolyFPS/Character/Enemy/EnemyBase.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -45,17 +50,16 @@ APlayerCharacter::APlayerCharacter()
     FPArmsMesh->CastShadow = false;
     FPArmsMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     FPArmsMesh->bRenderCustomDepth = true;
-    FPArmsMesh->SetCustomDepthStencilValue(1); // Optional if using stencil mask
 
-    GetCharacterMovement()->bOrientRotationToMovement = false;
+    WeaponIndex = 0;
 }
 
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
-	Super::BeginPlay();
-	
+    Super::BeginPlay();
+
     if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
     {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -65,20 +69,12 @@ void APlayerCharacter::BeginPlay()
         }
     }
 
-    // Spawn and attach pistol
-    if (UWorld* World = GetWorld())
+    // Spawn Weapon using StartingWeaponClass
+    if (ABaseWeapon* Weapon = GetWorld()->SpawnActor<ABaseWeapon>(StartingWeaponClass))
     {
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.Owner = this;
-
-        CurrentWeapon = World->SpawnActor<APistol>(APistol::StaticClass(), SpawnParams);
-        if (CurrentWeapon)
-        {
-            CurrentWeapon->AttachToComponent(FPArmsMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket")); // Make sure the socket exists
-        }
+        Weapon->AttachToComponent(FPArmsMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, FName("WeaponSocket"));
     }
-
-    SpawnStarterWeapon();
+    // Attach spawned weapon to WeaponSocket
 }
 
 // Called every frame
@@ -207,10 +203,24 @@ void APlayerCharacter::ClimbLadder(const FInputActionValue& Value)
 
 void APlayerCharacter::Fire()
 {
-    if (CurrentWeapon)
+    FVector FireStart = FirstPersonCamera->GetComponentLocation();
+    FVector FireRot = FirstPersonCamera->GetComponentRotation().Vector();
+    FVector FireEnd = FireStart + FireRot * 2000.0f;
+
+    FHitResult HitResult;
+    FCollisionObjectQueryParams CollisionQuery;
+    FCollisionQueryParams CollisionParams;
+    CollisionParams.AddIgnoredActor(this);
+
+    if (GetWorld()->LineTraceSingleByObjectType(OUT HitResult, FireStart, FireEnd, CollisionQuery, CollisionParams))
     {
-        CurrentWeapon->Fire();
+        if (AEnemyBase* Enemy = Cast<AEnemyBase>(HitResult.GetActor()))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Enemy HIT %s"), *Enemy->GetName());
+        }
     }
+
+    DrawDebugLine(GetWorld(), FireStart, FireEnd, FColor::Red, false, 2.0f, 0, 3.0f);
 }
 
 void APlayerCharacter::Landed(const FHitResult& Hit)
@@ -222,30 +232,5 @@ void APlayerCharacter::Landed(const FHitResult& Hit)
     {
         bIsOnLadder = false;
         GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-    }
-}
-
-void APlayerCharacter::SpawnStarterWeapon()
-{
-    if (StarterWeaponClass)
-    {
-        FActorSpawnParameters SpawnParams;
-        SpawnParams.Owner = this;
-        CurrentWeapon = GetWorld()->SpawnActor<ABaseWeapon>(StarterWeaponClass, SpawnParams);
-
-        if (CurrentWeapon)
-        {
-            CurrentWeapon->AttachToComponent(FPArmsMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("WeaponSocket"));
-            CurrentWeapon->Fire();
-
-            TArray<UPrimitiveComponent*> WeaponComponents;
-            CurrentWeapon->GetComponents<UPrimitiveComponent>(WeaponComponents);
-            for (auto* Comp : WeaponComponents)
-            {
-                Comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-                Comp->bRenderCustomDepth = true;
-                Comp->SetCustomDepthStencilValue(1);
-            }
-        }
     }
 }

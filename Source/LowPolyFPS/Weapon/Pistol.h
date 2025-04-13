@@ -13,9 +13,10 @@ UCLASS()
 class LOWPOLYFPS_API APistol : public ABaseWeapon
 {
 	GENERATED_BODY()
-	
 public:
 	APistol();
 
 	virtual void Fire() override;
+
+	virtual void Reload() override;
 };
