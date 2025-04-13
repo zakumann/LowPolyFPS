@@ -36,8 +36,14 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bIsOnLadder = false;
 
-    UPROPERTY()
+    UPROPERTY(EditAnywhere)
     class ALadder* CurrentLadder;
+
+    FVector LadderEnterLocation;
+
+public:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    class UBoxComponent* LadderTrigger;
 
 protected:
 

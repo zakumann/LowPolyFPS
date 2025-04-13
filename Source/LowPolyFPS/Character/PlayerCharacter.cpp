@@ -13,6 +13,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/BoxComponent.h"
 
 //Door
 #include "GameFramework/Actor.h"
@@ -192,7 +193,7 @@ void APlayerCharacter::Interact()
 
 void APlayerCharacter::ClimbLadder(const FInputActionValue& Value)
 {
-    if (bIsOnLadder)
+    if (bIsOnLadder && CurrentLadder && CurrentLadder->LadderTrigger && CurrentLadder->LadderTrigger->IsOverlappingActor(this))
     {
         float Direction = Value.Get<float>();
         AddMovementInput(FVector::UpVector, Direction);

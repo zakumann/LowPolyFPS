@@ -61,7 +61,8 @@ void ALadder::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 	if (APlayerCharacter* Player = Cast<APlayerCharacter>(OtherActor))
 	{
 		Player->CurrentLadder = this;
-		CurrentPlayer = Player; // <--- store local reference too
+		Player->LadderEnterLocation = Player->GetActorLocation(); // <--- store local reference too
+		CurrentPlayer = Player;
 	}
 }
 
