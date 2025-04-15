@@ -74,12 +74,38 @@ void APlayerCharacter::BeginPlay()
         Weapon->AttachToComponent(FPArmsMesh, FAttachmentTransformRules::SnapToTargetIncludingScale, FName("WeaponSocket"));
     }
     // Attach spawned weapon to WeaponSocket
+
+
+
+    // Lader
+    TArray<AActor*> FoundLadders;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALadder::StaticClass(), FoundLadders);
+
+    for (AActor* Actor : FoundLadders)
+    {
+        ALadder* Ladder = Cast<ALadder>(Actor);
+        if (Ladder)
+        {
+            Ladder->LadderTrigger->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnLadderBegin);
+            Ladder->LadderTrigger->OnComponentEndOverlap.AddDynamic(this, &APlayerCharacter::OnLadderEnd);
+        }
+    }
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+    if (CurrentLadder && bIsAtTopOfLadder && !bIsClimbing)
+    {
+        if (!bPressingS)
+        {
+            // Push the player slightly back
+            FVector PushBack = -GetActorForwardVector() * 100.f * DeltaTime;
+            AddActorWorldOffset(PushBack, true);
+        }
+    }
 }
 
 // Called to bind functionality to input
@@ -106,7 +132,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
         // Interact
         EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &APlayerCharacter::Interact);
         // Climb
-        EnhancedInputComponent->BindAction(ClimbUpDownAction, ETriggerEvent::Triggered, this, &APlayerCharacter::ClimbLadder);
+        EnhancedInputComponent->BindAction(MoveClimbAction, ETriggerEvent::Triggered, this, &APlayerCharacter::MoveClimb);
+        EnhancedInputComponent->BindAction(ClimbToggleAction, ETriggerEvent::Started, this, &APlayerCharacter::ToggleClimb);
 
         // Fire
         EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &APlayerCharacter::Fire);
@@ -115,14 +142,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::Move(const FInputActionValue& Value)
 {
-    FVector2D MovementVector = Value.Get<FVector2D>();
-    if (!Controller) return;
+    if (bIsClimbing) return; // Prevent default movement while climbing
 
-    if (!bIsOnLadder)
-    {
-        AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-        AddMovementInput(GetActorRightVector(), MovementVector.X);
-    }
+    FVector2D MovementVector = Value.Get<FVector2D>();
+
+    AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+    AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
 
 void APlayerCharacter::Look(const FInputActionValue& Value)
@@ -160,6 +185,49 @@ void APlayerCharacter::StopCrouch()
     isCrouching = false;
 }
 
+void APlayerCharacter::ToggleClimb()
+{
+    if (CurrentLadder)
+    {
+        bIsClimbing = !bIsClimbing;
+
+        if (bIsClimbing)
+        {
+            GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+            GetCharacterMovement()->StopMovementImmediately();
+        }
+        else
+        {
+            GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        }
+    }
+}
+
+void APlayerCharacter::StartClimbing()
+{
+    bIsClimbing = true;
+    GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+    GetCharacterMovement()->StopMovementImmediately();
+}
+
+void APlayerCharacter::StopClimbing()
+{
+    bIsClimbing = false;
+    GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    CurrentLadder = nullptr;
+    bPressingS = false;
+}
+
+void APlayerCharacter::MoveClimb(const FInputActionValue& Value)
+{
+    if (!bIsClimbing) return;
+
+    float AxisValue = Value.Get<float>();
+    if (FMath::IsNearlyZero(AxisValue)) return;
+
+    AddMovementInput(FVector::UpVector, AxisValue);
+}
+
 void APlayerCharacter::Interact()
 {
     // raycast range
@@ -173,30 +241,6 @@ void APlayerCharacter::Interact()
     {
         Door->PlayerCharacter = this;
         Door->OnInteract();
-    }
-    //Ladder status
-    if (CurrentLadder)
-    {
-        // Toggle climbing state
-        if (!bIsOnLadder)
-        {
-            bIsOnLadder = true;
-            GetCharacterMovement()->SetMovementMode(MOVE_Flying);
-        }
-        else
-        {
-            bIsOnLadder = false;
-            GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-        }
-    }
-}
-
-void APlayerCharacter::ClimbLadder(const FInputActionValue& Value)
-{
-    if (bIsOnLadder && CurrentLadder && CurrentLadder->LadderTrigger && CurrentLadder->LadderTrigger->IsOverlappingActor(this))
-    {
-        float Direction = Value.Get<float>();
-        AddMovementInput(FVector::UpVector, Direction);
     }
 }
 
@@ -231,14 +275,27 @@ void APlayerCharacter::Fire()
     DrawDebugLine(GetWorld(), FireStart, FireEnd, FColor::Red, false, 2.0f, 0, 3.0f);
 }
 
-void APlayerCharacter::Landed(const FHitResult& Hit)
+void APlayerCharacter::OnLadderBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+    bool bFromSweep, const FHitResult& SweepResult)
 {
-    Super::Landed(Hit);
-
-    // Exit ladder mode and switch to walking
-    if (bIsOnLadder)
+    if (OtherActor == this)
     {
-        bIsOnLadder = false;
-        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        CurrentLadder = Cast<ALadder>(OverlappedComp->GetOwner());
+        // Don't activate climbing automatically
+    }
+}
+
+void APlayerCharacter::OnLadderEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    if (OtherActor == this)
+    {
+        if (bIsClimbing)
+        {
+            StopClimbing(); // If you're climbing, stop.
+        }
+
+        CurrentLadder = nullptr; // No longer overlapping
     }
 }

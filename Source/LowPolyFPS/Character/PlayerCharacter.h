@@ -33,13 +33,20 @@ public:
     TSubclassOf<ABaseWeapon> StarterWeaponClass;
 
     //Lader
-    UPROPERTY(BlueprintReadWrite)
-    bool bIsOnLadder = false;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY()
     class ALadder* CurrentLadder;
 
     FVector LadderEnterLocation;
+
+    UPROPERTY(EditAnywhere)
+    float ClimbSpeed = 200.0f;
+
+    UFUNCTION()
+    void OnLadderBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+    UFUNCTION()
+    void OnLadderEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -88,8 +95,11 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     class UInputAction* InteractAction;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-    class UInputAction* ClimbUpDownAction;
+    UPROPERTY(EditAnywhere, Category = "Input")
+    class UInputAction* MoveClimbAction;
+
+    UPROPERTY(EditAnywhere, Category = "Input")
+    class UInputAction* ClimbToggleAction;
 
     // Input
     UPROPERTY(EditAnywhere, Category = "Input")
@@ -106,9 +116,20 @@ protected:
     void StartCrouch();
     void StopCrouch();
 
+    void ToggleClimb();
+    void StartClimbing();
+    void StopClimbing();
+
+    void MoveClimb(const FInputActionValue& Value);
+
+    bool bIsClimbing = false;
+
     void Interact();
-    void ClimbLadder(const FInputActionValue& Value);
+
     void Fire();
+
+    bool bIsAtTopOfLadder = false;
+    bool bPressingS = false;
 
     /** Movement Speed */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -117,21 +138,12 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float SprintSpeed = 1200.0f;
 
-    virtual void Landed(const FHitResult& Hit) override;
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
     float CrouchSpeed= 450.0f;
 
     // Curve asset for timeline interpolation
     UPROPERTY(EditAnywhere, Category = "Crouch")
     UCurveFloat* CrouchCurve;
-
-    // Crouch & Stand Heights
-    UPROPERTY(EditAnywhere, Category = "Crouch")
-    float CrouchHeight = 40.0f;
-
-    UPROPERTY(EditAnywhere, Category = "Crouch")
-    float StandHeight = 88.0f;
 
     /** Stores the original camera position for smooth interpolation */
     FVector DefaultCameraPosition;
