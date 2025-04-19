@@ -29,6 +29,7 @@
 
 //Enemy
 #include "LowPolyFPS/Character/Enemy/EnemyBase.h"
+#include "LowPolyFPS/Character/Enemy/EnemyFSM.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -261,15 +262,13 @@ void APlayerCharacter::Fire()
         {
             if (AActor* HitActor = Result.GetActor())
             {
-                UE_LOG(LogTemp, Warning, TEXT("Actor Name: %s"), *HitActor->GetName());
+                // Try to get the component from the actor
+                if (UEnemyFSM* enemyFSM = HitActor->FindComponentByClass<UEnemyFSM>())
+                {
+                    enemyFSM->OnDamageProcess();
+                }
             }
         }
-
-        //if (AEnemyBase* Enemy = Cast<AEnemyBase>(HitResult.GetActor()))
-        //{
-        //    UE_LOG(LogTemp, Warning, TEXT("Enemy HIT %s"), *Enemy->GetName());
-        //    //Enemy->Hit(this);
-        //}
     }
 
     DrawDebugLine(GetWorld(), FireStart, FireEnd, FColor::Red, false, 2.0f, 0, 3.0f);
