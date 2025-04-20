@@ -77,4 +77,16 @@ public:
 
 	// Damage message
 	void OnDamageProcess();
+
+	//Heatlh
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category=FSM)
+	int32 hp = 3;
+
+	//Damage delay
+	UPROPERTY(EditAnywhere, Category=FSM)
+	float damageDelayTime = 2.0f;
+
+	// disappear time
+	UPROPERTY(EditAnywhere, Category=FSM)
+	float dieSpeed = 50.0f;
 };

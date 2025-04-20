@@ -6,6 +6,7 @@
 #include "LowPolyFPS/Character/Enemy/EnemyBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "LowPolyFPS/LowPolyFPS.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -43,6 +44,9 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 		break;
 	case EEnemyState::Move:
 		MoveState();
+		break;
+	case EEnemyState::Attack:
+		AttackState();
 		break;
 	case EEnemyState::Damage:
 		DamageState();
@@ -112,11 +116,53 @@ void UEnemyFSM::AttackState()
 	}
 }
 // Damage State
-void UEnemyFSM::DamageState() {}
+void UEnemyFSM::DamageState() 
+{
+	//1. Time pass
+	currentTime += GetWorld()->DeltaTimeSeconds;
+	//2. if currentTime over delayTime
+	if (currentTime > damageDelayTime)
+	{
+		//3. turn Idle time
+		mState = EEnemyState::Idle;
+		// turn currentTime to 0
+		currentTime = 0;
+	}
+}
 // Die State
-void UEnemyFSM::DieState() {}
+void UEnemyFSM::DieState()
+{
+	// disappeared toward under
+	// P = P0 + vt
+	FVector P0 = me->GetActorLocation();
+	FVector vt = FVector::DownVector * dieSpeed * GetWorld()->DeltaTimeSeconds;
+	FVector P = P0 + vt;
+	me->SetActorLocation(P);
+
+	//1. if object downs over two meters...
+	if (P.Z < -200.0f)
+	{
+		//Destroy
+		me->Destroy();
+	}
+}
 
 void UEnemyFSM::OnDamageProcess()
 {
-	me->Destroy();
+	// Decrease Health
+	hp--;
+
+	// if Health still remains
+	if (hp > 0)
+	{
+		mState = EEnemyState::Damage;
+	}
+	//otherwise
+	else
+	{
+		//Died
+		mState = EEnemyState::Die;
+		// Deactivate Capsule Collision
+		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
