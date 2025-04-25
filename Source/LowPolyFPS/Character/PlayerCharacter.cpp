@@ -29,7 +29,6 @@
 
 //Enemy
 #include "LowPolyFPS/Character/Enemy/EnemyBase.h"
-#include "LowPolyFPS/Character/Enemy/EnemyFSM.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -255,21 +254,6 @@ void APlayerCharacter::Fire()
     FCollisionQueryParams CollisionParams;
     FCollisionResponseParams CollisionResponse;
     CollisionParams.AddIgnoredActor(this);
-
-    if (GetWorld()->LineTraceMultiByChannel(OUT HitResults, FireStart, FireEnd, ECollisionChannel::ECC_Visibility, CollisionParams, CollisionResponse))
-    {
-        for (FHitResult& Result : HitResults)
-        {
-            if (AActor* HitActor = Result.GetActor())
-            {
-                // Try to get the component from the actor
-                if (UEnemyFSM* enemyFSM = HitActor->FindComponentByClass<UEnemyFSM>())
-                {
-                    enemyFSM->OnDamageProcess();
-                }
-            }
-        }
-    }
 
     DrawDebugLine(GetWorld(), FireStart, FireEnd, FColor::Red, false, 2.0f, 0, 3.0f);
 }

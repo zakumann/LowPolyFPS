@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "EnemyBase.generated.h"
 
+class UBehaviorTree;
+class UBlackboardComponent;
+
 UCLASS()
 class LOWPOLYFPS_API AEnemyBase : public ACharacter
 {
@@ -15,15 +18,6 @@ public:
 	// Sets default values for this character's properties
 	AEnemyBase();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-public:
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-public:
-	// Enemy AI Component class
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=FSMComponent)
-	class UEnemyFSM* fsm;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+	UBehaviorTree* BehaviorTree;
 };
